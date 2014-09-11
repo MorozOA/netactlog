@@ -2,20 +2,22 @@ __author__ = 'Moroz Oleg'
 
 # Analyze current active hosts and compare to previous state
 # Log state changes
-# version 0.7.1
+# version 0.8.0
 
 import logging
 import os
 
 logFileName = "netstatechanges.log"
 dbFileName = "laststate.db"
+exceptionsFileName = "except.list"
 curArp = []
 lastArp = {}
+exceptArp = []
 
 curDirPath = os.path.dirname(os.path.realpath(__file__))
 logFullFileName = curDirPath + "/" + logFileName
 dbFullFileName = curDirPath + "/" + dbFileName
-#print logFullFileName
+exceptFullFileName = curDirPath + "/" + exceptionsFileName
 
 logger = logging.getLogger("net_activity")
 logger.setLevel(logging.DEBUG)
@@ -67,7 +69,7 @@ def checkActiveHosts():
     logger.debug("Final active hosts list %r" % curArp)
 
 def loadLastState(DBFileName):
-    logger.debug("Try to load last stated from file: %s" % DBFileName)
+    logger.debug("Try to load last states from file: %s" % DBFileName)
     if os.path.isfile(DBFileName):
         logger.debug("File exists... opening...")
         f = open(DBFileName)
@@ -110,8 +112,29 @@ def saveLastState(DBFileName):
         f.write("%s %s\n" % (h, lastArp[h]))
     f.close()
 
+def handleExceptions(exceptFile):
+    logger.debug("Try to load exceptions file from %s" % exceptFile)
+    if os.path.isfile(exceptFile):
+        logger.debug("File exist. Loading...")
+        f = open(exceptFile)
+        for s in f:
+            logger.debug("Readed : %s" % s.strip())
+            exceptArp.append(s.strip())
+        f.close()
+        logger.debug("Exception list: %r" % exceptArp)
+    if len(exceptArp) > 0 :
+        for e in exceptArp:
+            logger.debug("Handling exception : %s" % e)
+            if e in curArp:
+                logger.debug("Removing %s from active list" % e)
+                curArp.remove(e)
+            if e in lastArp.keys():
+                logger.debug("Removing %s from state list" % e)
+                del lastArp[e]
+
 getActiveHosts()
-checkActiveHosts()
 loadLastState(dbFullFileName)
+handleExceptions(exceptFullFileName)
+checkActiveHosts()
 compareHostStates()
 saveLastState(dbFullFileName)
