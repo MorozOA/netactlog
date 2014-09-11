@@ -29,7 +29,7 @@ fileLogger.setLevel(logging.INFO)
 fileLogger.setFormatter(formater)
 
 consoleLogger = logging.StreamHandler()
-consoleLogger.setLevel(logging.DEBUG)
+consoleLogger.setLevel(logging.WARNING)
 consoleLogger.setFormatter(formater)
 
 logger.addHandler(fileLogger)
