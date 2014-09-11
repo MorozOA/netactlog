@@ -2,7 +2,7 @@ __author__ = 'Moroz Oleg'
 
 # Analyze current active hosts and compare to previous state
 # Log state changes
-# version 0.7
+# version 0.7.1
 
 import logging
 import os
@@ -61,7 +61,7 @@ def checkActiveHosts():
         logger.debug("Ping command: %s" % pingCmd)
         pingReceived = os.popen(pingCmd).read().strip()
         logger.debug("Ping result: %r" % pingReceived)
-        if pingReceived == '0':
+        if pingReceived != '1':
             logger.debug("Removing from active hosts: %s" % h)
             curArp.remove(h)
     logger.debug("Final active hosts list %r" % curArp)
