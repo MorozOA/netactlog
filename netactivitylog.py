@@ -2,7 +2,7 @@ __author__ = 'Moroz Oleg'
 
 # Analyze current active hosts and compare to previous state
 # Log state changes
-# version 0.8.0
+# version 0.9.0
 
 import logging
 import os
@@ -10,14 +10,17 @@ import os
 logFileName = "netstatechanges.log"
 dbFileName = "laststate.db"
 exceptionsFileName = "except.list"
+confFileName = "netact.conf"
 curArp = []
 lastArp = {}
 exceptArp = []
+cfgArr = {}
 
 curDirPath = os.path.dirname(os.path.realpath(__file__))
 logFullFileName = curDirPath + "/" + logFileName
 dbFullFileName = curDirPath + "/" + dbFileName
 exceptFullFileName = curDirPath + "/" + exceptionsFileName
+confFullFileName = curDirPath + "/" + confFileName
 
 logger = logging.getLogger("net_activity")
 logger.setLevel(logging.DEBUG)
@@ -30,6 +33,7 @@ fileLogger.setFormatter(formater)
 
 consoleLogger = logging.StreamHandler()
 consoleLogger.setLevel(logging.WARNING)
+#consoleLogger.setLevel(logging.DEBUG)
 consoleLogger.setFormatter(formater)
 
 logger.addHandler(fileLogger)
@@ -38,9 +42,31 @@ logger.addHandler(consoleLogger)
 logger.debug("Log file name: %s" % logFullFileName)
 logger.debug("DB file name: %s" % dbFullFileName)
 
+def setDefaults():
+    logger.debug("Setting default variables")
+    cfgArr['awk'] = '/usr/bin/awk'
+    cfgArr['arp'] = '/usr/sbin/arp'
+    cfgArr['ping'] = '/sbin/ping'
+    logger.debug("Initialized defaults: %r" % cfgArr)
+
+def loadConf(cfgFileName):
+    logger.debug("Try to load configuration from %s" % cfgFileName)
+    if os.path.isfile(cfgFileName):
+        logger.debug("Configuration file found -- loading...")
+        f = open(cfgFileName)
+        for s in f:
+            logger.debug("loaded cfg string: %s" % s.strip())
+            strParam, strVal = s.strip().split()
+            logger.debug("Parameter: %s ; value: %s" % (strParam, strVal))
+            cfgArr[strParam] = strVal
+        f.close()
+    logger.debug("Configuration loaded: %r" % cfgArr)
+
 def getActiveHosts():
     logger.debug("Getting active arp table")
-    f = os.popen("arp -a | awk '! /10.1.1.255/ {print $1,$2}'")
+    strCmd = "%s -a | %s '{print $1,$2}'" % (cfgArr['arp'], cfgArr['awk'])
+    logger.debug("Get active hosts command : %s" % strCmd)
+    f = os.popen(strCmd)
     for s in f:
         logger.debug("Parsing: %s" % s.strip())
         strName, strIP = s.split()
@@ -59,7 +85,7 @@ def checkActiveHosts():
     logger.debug("Checking for real active hosts...")
     for h in curArp:
         logger.debug("Checking host %s" % h)
-        pingCmd = "ping -qc 1 -W 3 %s | awk '/packets/ {print $4}'" % h
+        pingCmd = "%s -qc 1 -W 3 %s | %s '/packets/ {print $4}'" % (cfgArr['ping'] ,h, cfgArr['awk'])
         logger.debug("Ping command: %s" % pingCmd)
         pingReceived = os.popen(pingCmd).read().strip()
         logger.debug("Ping result: %r" % pingReceived)
@@ -132,6 +158,8 @@ def handleExceptions(exceptFile):
                 logger.debug("Removing %s from state list" % e)
                 del lastArp[e]
 
+setDefaults()
+loadConf(confFullFileName)
 getActiveHosts()
 loadLastState(dbFullFileName)
 handleExceptions(exceptFullFileName)
