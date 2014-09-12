@@ -1,3 +1,8 @@
-awk /usr/bin/awk
-arp /usr/sbin/arp
-ping sbin/ping
+[Tools Path]
+awk = /usr/bin/awk
+arp = /usr/sbin/arp
+ping = /sbin/ping
+
+[Logging]
+log_file_level = info
+log_cons_level = warn

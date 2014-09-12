@@ -2,10 +2,12 @@ __author__ = 'Moroz Oleg'
 
 # Analyze current active hosts and compare to previous state
 # Log state changes
-# version 0.9.0
+# version 0.9.4
 
 import logging
+import logging.handlers
 import os
+import ConfigParser
 
 logFileName = "netstatechanges.log"
 dbFileName = "laststate.db"
@@ -22,45 +24,70 @@ dbFullFileName = curDirPath + "/" + dbFileName
 exceptFullFileName = curDirPath + "/" + exceptionsFileName
 confFullFileName = curDirPath + "/" + confFileName
 
-logger = logging.getLogger("net_activity")
-logger.setLevel(logging.DEBUG)
+def initLogger():
+    global logger
+    global logLevelArr
+    logger = logging.getLogger("net_activity")
+    logger.setLevel(logging.DEBUG)
+    logLevelArr = {
+        'debug' : logging.DEBUG,
+        'info' : logging.INFO,
+        'warn' : logging.WARNING,
+        'error' : logging.ERROR,
+        'crit' : logging.CRITICAL
+    }
 
-formater = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formater = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fileLogger = logging.FileHandler(logFullFileName)
+    fileLogger.setLevel(logLevelArr[cfgArr['log_file_level']])
+    fileLogger.setFormatter(formater)
 
-fileLogger = logging.FileHandler(logFullFileName)
-fileLogger.setLevel(logging.INFO)
-fileLogger.setFormatter(formater)
+    consoleLogger = logging.StreamHandler()
+    consoleLogger.setLevel(logLevelArr[cfgArr['log_cons_level']])
+    consoleLogger.setFormatter(formater)
 
-consoleLogger = logging.StreamHandler()
-consoleLogger.setLevel(logging.WARNING)
-#consoleLogger.setLevel(logging.DEBUG)
-consoleLogger.setFormatter(formater)
+    rotateLogger = logging.handlers.TimedRotatingFileHandler(logFullFileName, 'W0', 1, 14)
 
-logger.addHandler(fileLogger)
-logger.addHandler(consoleLogger)
+    logger.addHandler(fileLogger)
+    logger.addHandler(consoleLogger)
+    logger.addHandler(rotateLogger)
 
-logger.debug("Log file name: %s" % logFullFileName)
-logger.debug("DB file name: %s" % dbFullFileName)
+    logger.debug("Log file name: %s" % logFullFileName)
+    logger.debug("DB file name: %s" % dbFullFileName)
 
 def setDefaults():
-    logger.debug("Setting default variables")
     cfgArr['awk'] = '/usr/bin/awk'
     cfgArr['arp'] = '/usr/sbin/arp'
     cfgArr['ping'] = '/sbin/ping'
-    logger.debug("Initialized defaults: %r" % cfgArr)
+    cfgArr['log_file_level'] = 'info'
+    cfgArr['log_cons_level'] = 'warn'
+    #cfgArr['log_cons_level'] = 'debug' # only for configuration load debugging
+
+def updateLoggerConfigration():
+    logger.debug("Updating logger configuration")
+    for h in logger.handlers:
+        if type(h) is logging.FileHandler:
+            logger.debug("Update file logger level to %s" % cfgArr['log_file_level'])
+            h.setLevel(logLevelArr[cfgArr['log_file_level']])
+        if type(h) is logging.StreamHandler:
+            logger.debug("Update console logger level to %s" % cfgArr['log_cons_level'])
+            h.setLevel(logLevelArr[cfgArr['log_cons_level']])
 
 def loadConf(cfgFileName):
     logger.debug("Try to load configuration from %s" % cfgFileName)
     if os.path.isfile(cfgFileName):
         logger.debug("Configuration file found -- loading...")
-        f = open(cfgFileName)
-        for s in f:
-            logger.debug("loaded cfg string: %s" % s.strip())
-            strParam, strVal = s.strip().split()
-            logger.debug("Parameter: %s ; value: %s" % (strParam, strVal))
-            cfgArr[strParam] = strVal
-        f.close()
+        config = ConfigParser.ConfigParser()
+        config.read(cfgFileName)
+        logger.debug("Enumerating section in configuration")
+        for sec in config.sections():
+            logger.debug("Found section: %s . Enumerating options" % sec)
+            for opt in config.options(sec):
+                logger.debug("Found option: %s" % opt)
+                cfgArr[opt] = config.get(sec, opt)
+                logger.debug("Option %s set to value %s" % (opt, cfgArr[opt]))
     logger.debug("Configuration loaded: %r" % cfgArr)
+    updateLoggerConfigration()
 
 def getActiveHosts():
     logger.debug("Getting active arp table")
@@ -159,6 +186,7 @@ def handleExceptions(exceptFile):
                 del lastArp[e]
 
 setDefaults()
+initLogger()
 loadConf(confFullFileName)
 getActiveHosts()
 loadLastState(dbFullFileName)

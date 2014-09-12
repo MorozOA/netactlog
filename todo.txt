@@ -1,0 +1,9 @@
+todo list:
+
+add reporting feature
+fix error handling of shell command ping
+
++ add log rotation feature
++ move logger initialization in dedicated function
++ add logger settings to configuration file
++ reformat configuration file
