@@ -2,9 +2,10 @@ __author__ = 'Moroz Oleg'
 
 # Analyze current active hosts and compare to previous state
 # Log state changes
-# version 0.9.3
+# version 0.9.4
 
 import logging
+import logging.handlers
 import os
 import ConfigParser
 
@@ -45,8 +46,11 @@ def initLogger():
     consoleLogger.setLevel(logLevelArr[cfgArr['log_cons_level']])
     consoleLogger.setFormatter(formater)
 
+    rotateLogger = logging.handlers.TimedRotatingFileHandler(logFullFileName, 'W0', 1, 14)
+
     logger.addHandler(fileLogger)
     logger.addHandler(consoleLogger)
+    logger.addHandler(rotateLogger)
 
     logger.debug("Log file name: %s" % logFullFileName)
     logger.debug("DB file name: %s" % dbFullFileName)
