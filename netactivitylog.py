@@ -2,7 +2,7 @@ __author__ = 'Moroz Oleg'
 
 # Analyze current active hosts and compare to previous state
 # Log state changes
-# version 0.9.4
+# version 0.9.4.1
 
 import logging
 import logging.handlers
@@ -47,6 +47,7 @@ def initLogger():
     consoleLogger.setFormatter(formater)
 
     rotateLogger = logging.handlers.TimedRotatingFileHandler(logFullFileName, 'W0', 1, 14)
+    rotateLogger.setLevel(60)
 
     logger.addHandler(fileLogger)
     logger.addHandler(consoleLogger)

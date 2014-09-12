@@ -1,6 +1,10 @@
+ver 0.9.4.1
+---------
+fixed bug with logging
+
 ver 0.9.4
 ---------
-log rotation added (one in week on mondey)
+log rotation added (one in week on monday)
 
 ver 0.9.3
 ---------
