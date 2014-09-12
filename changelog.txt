@@ -1,10 +1,10 @@
-ver 0.9.3
+ver 0.9.4
 ---------
 log rotation added (one in week on mondey)
 
 ver 0.9.3
 ---------
-netact.conf.sample - fixed ecample of ping path
+netact.conf.sample - fixed example of ping path
 logger initialization moved to dedicated function
 reformated configuration file
 added logger configuration ability
