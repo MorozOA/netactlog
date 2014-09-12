@@ -1,3 +1,15 @@
+Analyze current active hosts and compare to previous state
+Log state changes
+
+Script list arp table.
+Load last state.
+Handle exceptions.
+Check if hosts realy active (ping)
+Compare states and log state changes is such way:
+
+2014-09-12 00:40:02,744 - net_activity - INFO - Host host1.domain.local become inactive
+2014-09-12 00:50:02,310 - net_activity - INFO - Host host1.domain.local become active
+
 Script must be executed in such way:
 
 /python-path /script-path

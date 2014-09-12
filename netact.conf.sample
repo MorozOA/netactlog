@@ -1,0 +1,3 @@
+awk /usr/bin/awk
+arp /usr/sbin/arp
+ping sbin/ping
