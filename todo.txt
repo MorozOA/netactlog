@@ -1,0 +1,7 @@
+todo list:
+
+move logger initialization in dedicated function
+add logger settings to configuration file
+add log rotation feature
+add reporting feature
+reformat configuration file
